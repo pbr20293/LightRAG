@@ -815,3 +815,63 @@ export const getDocumentStatusCounts = async (): Promise<StatusCountsResponse> =
   const response = await axiosInstance.get('/documents/status_counts')
   return response.data
 }
+
+// Prompt Configuration Types
+export type PromptModeResponse = {
+  use_engineering_prompts: boolean
+  entity_types: string[]
+  message: string
+}
+
+export type PromptModeRequest = {
+  use_engineering_prompts: boolean
+}
+
+export type PromptStatusResponse = {
+  mode: 'engineering' | 'general'
+  environment_variable: string
+  config_files_available: {
+    entity_types_config?: boolean
+    entity_types_count?: number
+    engineering_prompts?: boolean
+    prompt_count?: number
+  }
+  active_prompts_loaded: boolean
+}
+
+/**
+ * Get current prompt mode and entity types
+ * @returns Promise with current prompt configuration
+ */
+export const getPromptMode = async (): Promise<PromptModeResponse> => {
+  const response = await axiosInstance.get('/api/prompt-mode')
+  return response.data
+}
+
+/**
+ * Set prompt mode (general vs engineering)
+ * @param request The prompt mode request
+ * @returns Promise with updated prompt configuration
+ */
+export const setPromptMode = async (request: PromptModeRequest): Promise<PromptModeResponse> => {
+  const response = await axiosInstance.post('/api/prompt-mode', request)
+  return response.data
+}
+
+/**
+ * Get current entity types based on active prompt mode
+ * @returns Promise with current entity types
+ */
+export const getEntityTypes = async (): Promise<string[]> => {
+  const response = await axiosInstance.get('/api/prompt-mode/entity-types')
+  return response.data
+}
+
+/**
+ * Get detailed status of prompt configuration
+ * @returns Promise with detailed prompt configuration status
+ */
+export const getPromptStatus = async (): Promise<PromptStatusResponse> => {
+  const response = await axiosInstance.get('/prompt-mode/status')
+  return response.data
+}

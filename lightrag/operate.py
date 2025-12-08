@@ -46,7 +46,7 @@ from lightrag.base import (
     QueryResult,
     QueryContextResult,
 )
-from lightrag.prompt import PROMPTS
+from lightrag.prompt import PROMPTS, get_active_prompts, get_entity_types
 from lightrag.constants import (
     GRAPH_FIELD_SEP,
     DEFAULT_MAX_ENTITY_TOKENS,
@@ -54,7 +54,6 @@ from lightrag.constants import (
     DEFAULT_MAX_TOTAL_TOKENS,
     DEFAULT_RELATED_CHUNK_NUMBER,
     DEFAULT_KG_CHUNK_PICK_METHOD,
-    DEFAULT_ENTITY_TYPES,
     DEFAULT_SUMMARY_LANGUAGE,
     SOURCE_IDS_LIMIT_METHOD_KEEP,
     SOURCE_IDS_LIMIT_METHOD_FIFO,
@@ -2756,18 +2755,22 @@ async def extract_entities(
     use_llm_func: callable = global_config["llm_model_func"]
     entity_extract_max_gleaning = global_config["entity_extract_max_gleaning"]
 
+    # Get dynamic prompts and entity types based on environment
+    ACTIVE_PROMPTS = get_active_prompts()
+    dynamic_entity_types = get_entity_types()
+
     ordered_chunks = list(chunks.items())
     # add language and example number params to prompt
     language = global_config["addon_params"].get("language", DEFAULT_SUMMARY_LANGUAGE)
     entity_types = global_config["addon_params"].get(
-        "entity_types", DEFAULT_ENTITY_TYPES
+        "entity_types", dynamic_entity_types
     )
 
-    examples = "\n".join(PROMPTS["entity_extraction_examples"])
+    examples = "\n".join(ACTIVE_PROMPTS["entity_extraction_examples"])
 
     example_context_base = dict(
-        tuple_delimiter=PROMPTS["DEFAULT_TUPLE_DELIMITER"],
-        completion_delimiter=PROMPTS["DEFAULT_COMPLETION_DELIMITER"],
+        tuple_delimiter=ACTIVE_PROMPTS["DEFAULT_TUPLE_DELIMITER"],
+        completion_delimiter=ACTIVE_PROMPTS["DEFAULT_COMPLETION_DELIMITER"],
         entity_types=", ".join(entity_types),
         language=language,
     )
@@ -2775,8 +2778,8 @@ async def extract_entities(
     examples = examples.format(**example_context_base)
 
     context_base = dict(
-        tuple_delimiter=PROMPTS["DEFAULT_TUPLE_DELIMITER"],
-        completion_delimiter=PROMPTS["DEFAULT_COMPLETION_DELIMITER"],
+        tuple_delimiter=ACTIVE_PROMPTS["DEFAULT_TUPLE_DELIMITER"],
+        completion_delimiter=ACTIVE_PROMPTS["DEFAULT_COMPLETION_DELIMITER"],
         entity_types=",".join(entity_types),
         examples=examples,
         language=language,
@@ -2804,13 +2807,13 @@ async def extract_entities(
         cache_keys_collector = []
 
         # Get initial extraction
-        entity_extraction_system_prompt = PROMPTS[
+        entity_extraction_system_prompt = ACTIVE_PROMPTS[
             "entity_extraction_system_prompt"
         ].format(**{**context_base, "input_text": content})
-        entity_extraction_user_prompt = PROMPTS["entity_extraction_user_prompt"].format(
+        entity_extraction_user_prompt = ACTIVE_PROMPTS["entity_extraction_user_prompt"].format(
             **{**context_base, "input_text": content}
         )
-        entity_continue_extraction_user_prompt = PROMPTS[
+        entity_continue_extraction_user_prompt = ACTIVE_PROMPTS[
             "entity_continue_extraction_user_prompt"
         ].format(**{**context_base, "input_text": content})
 

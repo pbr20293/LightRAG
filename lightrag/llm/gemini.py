@@ -115,23 +115,50 @@ def _format_history_messages(history_messages: list[dict[str, Any]] | None) -> s
 
 
 def _extract_response_text(response: Any) -> str:
+    print(f"DEBUG: Response type: {type(response)}")
+    print(f"DEBUG: Response has text attr: {hasattr(response, 'text')}")
+    
     if getattr(response, "text", None):
+        print(f"DEBUG: Using direct response.text")
         return response.text
 
     candidates = getattr(response, "candidates", None)
+    print(f"DEBUG: Candidates: {candidates is not None}, count: {len(candidates) if candidates else 0}")
+    
     if not candidates:
+        print("DEBUG: No candidates found, returning empty string")
         return ""
 
     parts: list[str] = []
-    for candidate in candidates:
-        if not getattr(candidate, "content", None):
+    for i, candidate in enumerate(candidates):
+        print(f"DEBUG: Processing candidate {i}")
+        print(f"DEBUG: Candidate type: {type(candidate)}")
+        content = getattr(candidate, "content", None)
+        print(f"DEBUG: Candidate content: {content is not None}, type: {type(content)}")
+        
+        if not content:
+            print(f"DEBUG: Candidate {i} has no content, skipping")
             continue
-        for part in getattr(candidate.content, "parts", []):
+            
+        print(f"DEBUG: Candidate {i} content type: {type(content)}")
+        parts_attr = getattr(content, "parts", None)
+        print(f"DEBUG: Content parts: {parts_attr is not None}, type: {type(parts_attr)}")
+        
+        if parts_attr is None:
+            print(f"DEBUG: Candidate {i} content.parts is None")
+            continue
+            
+        for j, part in enumerate(parts_attr):
+            print(f"DEBUG: Processing part {j} of candidate {i}")
             text = getattr(part, "text", None)
+            print(f"DEBUG: Part {j} text: {text is not None}, length: {len(text) if text else 0}")
             if text:
                 parts.append(text)
 
-    return "\n".join(parts)
+    print(f"DEBUG: Total parts collected: {len(parts)}")
+    result = "\n".join(parts)
+    print(f"DEBUG: Final result length: {len(result)}")
+    return result
 
 
 async def gemini_complete_if_cache(

@@ -66,6 +66,12 @@ interface SettingsState {
   apiKey: string | null
   setApiKey: (key: string | null) => void
 
+  // Prompt mode settings
+  useEngineeringPrompts: boolean
+  setUseEngineeringPrompts: (use: boolean) => void
+  promptModeEntityTypes: string[]
+  setPromptModeEntityTypes: (types: string[]) => void
+
   // App settings
   theme: Theme
   setTheme: (theme: Theme) => void
@@ -120,6 +126,10 @@ const useSettingsStoreBase = create<SettingsState>()(
 
       retrievalHistory: [],
       userPromptHistory: [],
+
+      // Prompt mode settings
+      useEngineeringPrompts: false,
+      promptModeEntityTypes: [],
 
       querySettings: {
         mode: 'global',
@@ -190,6 +200,10 @@ const useSettingsStoreBase = create<SettingsState>()(
       setEnableHealthCheck: (enable: boolean) => set({ enableHealthCheck: enable }),
 
       setApiKey: (apiKey: string | null) => set({ apiKey }),
+
+      // Prompt mode setters
+      setUseEngineeringPrompts: (use: boolean) => set({ useEngineeringPrompts: use }),
+      setPromptModeEntityTypes: (types: string[]) => set({ promptModeEntityTypes: types }),
 
       setCurrentTab: (tab: Tab) => set({ currentTab: tab }),
 

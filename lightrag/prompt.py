@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any
+import os
 
 
 PROMPTS: dict[str, Any] = {}
@@ -7,6 +8,44 @@ PROMPTS: dict[str, Any] = {}
 # All delimiters must be formatted as "<|UPPER_CASE_STRING|>"
 PROMPTS["DEFAULT_TUPLE_DELIMITER"] = "<|#|>"
 PROMPTS["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
+
+# Function to load entity types based on mode
+def get_entity_types():
+    """Get entity types based on environment variable."""
+    use_engineering = os.getenv("LIGHTRAG_USE_ENGINEERING_PROMPTS", "false").lower() in ("true", "1", "yes")
+    
+    if use_engineering:
+        try:
+            from lightrag.entity_types_config import ENGINEERING_ENTITY_TYPES
+            return ENGINEERING_ENTITY_TYPES
+        except ImportError:
+            # Fallback if engineering config not available
+            return ["Specification", "Standard", "Grade", "Material", "Composition Element", 
+                   "Mechanical Property", "Chemical Property", "Physical Property", "Property Value",
+                   "Process", "Test Method", "Application", "Requirement", "Organization", "Other"]
+    else:
+        # Default entity types for general documents
+        return ["person", "organization", "location", "event", "concept", "equipment", "product", "category", "other"]
+
+# Function to get the appropriate prompts
+def get_active_prompts():
+    """Get prompts based on environment variable."""
+    use_engineering = os.getenv("LIGHTRAG_USE_ENGINEERING_PROMPTS", "false").lower() in ("true", "1", "yes")
+    
+    if use_engineering:
+        try:
+            # Import engineering prompts
+            from lightrag.prompt_engineering_specs import PROMPTS as ENGINEERING_PROMPTS
+            
+            # Merge with defaults, engineering takes precedence
+            active_prompts = PROMPTS.copy()
+            active_prompts.update(ENGINEERING_PROMPTS)
+            return active_prompts
+        except ImportError:
+            # Fallback if engineering prompts not available
+            print("Warning: Engineering prompts not found, using default prompts")
+    
+    return PROMPTS
 
 PROMPTS["entity_extraction_system_prompt"] = """---Role---
 You are a Knowledge Graph Specialist responsible for extracting entities and relationships from the input text.
